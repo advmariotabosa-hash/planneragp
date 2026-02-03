@@ -4,7 +4,9 @@
   "description": "PlannerAGP Project",
   "scripts": {
     "build": "nest build",
-    "start": "node dist/main"
+    "start": "node dist/main",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main"
   },
   "dependencies": {
     "@nestjs/core": "^11.0.0",
@@ -20,3 +22,9 @@
     "typescript": "^5.0.0"
   }
 }
+```
+
+.npmrc:
+```
+script-shell=/bin/bash
+engine-strict=true
