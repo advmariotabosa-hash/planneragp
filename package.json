@@ -22,9 +22,3 @@
     "typescript": "^5.0.0"
   }
 }
-```
-
-.npmrc:
-```
-script-shell=/bin/bash
-engine-strict=true
