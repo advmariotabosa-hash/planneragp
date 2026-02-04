@@ -19,28 +19,3 @@
     "noFallthroughCasesInSwitch": false
   }
 }
-```
-
-2. Adicionar `.gitignore`
-```
-# Dependências
-node_modules/
-
-# Builds
-dist/
-
-# Logs
-logs/
-*.log
-
-# Ambiente
-.env
-.env.local
-
-# IDEs
-.vscode/
-.idea/
-
-# Sistema
-.DS_Store
-Thumbs.db
