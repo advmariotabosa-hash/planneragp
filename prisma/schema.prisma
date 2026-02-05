@@ -1,0 +1,639 @@
+// ==========================================
+// PLANNERAGP v2.1 - SCHEMA PRISMA COMPLETO
+// Memorial Descritivo: 19 Tabelas + 12 Enums
+// Data: 05/02/2026
+// ==========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMERAÇÕES (12 ENUMS)
+// ==========================================
+
+enum TipoUsuario {
+  master
+  junior
+}
+
+enum StatusPendencia {
+  pendente
+  concluida
+}
+
+enum StatusAgendamento {
+  pendente
+  aprovado
+  rejeitado
+}
+
+enum TipoRecorrencia {
+  nenhuma
+  diaria
+  semanal
+  mensal
+  anual
+}
+
+enum TipoPlano {
+  trial
+  starter_trimestral
+  starter_semestral
+  starter_anual
+  growth_trimestral
+  growth_semestral
+  growth_anual
+  business_trimestral
+  business_semestral
+  business_anual
+  enterprise_trimestral
+  enterprise_semestral
+  enterprise_anual
+  assembleia_1
+  assembleia_2
+  assembleia_4
+  administradora_bronze
+  administradora_prata
+  administradora_ouro
+  administradora_diamante
+  starter
+  growth
+  business
+  enterprise
+  avulso
+}
+
+enum PeriodoContratacao {
+  trimestral
+  semestral
+  anual
+}
+
+enum StatusAssembleia {
+  ativa
+  concluida
+  expirada
+}
+
+enum TipoConsentimento {
+  termos_uso
+  politica_privacidade
+  marketing
+}
+
+enum StatusIndicacao {
+  pendente
+  convertido
+  recompensado
+}
+
+enum StatusConvite {
+  pendente
+  aceito
+  expirado
+  cancelado
+}
+
+enum TipoRecompensa {
+  mes_gratis
+  desconto
+  percentual
+}
+
+enum PlanoAdministradora {
+  bronze
+  prata
+  ouro
+  diamante
+}
+
+// ==========================================
+// MÓDULO 1: USUÁRIOS E ORGANIZAÇÕES (3 tabelas)
+// ==========================================
+
+model TB_ORGANIZACAO {
+  id_organizacao  String   @id @default(uuid())
+  nome            String
+  id_master       String   @unique
+  plano_tipo      TipoPlano @default(trial)
+  limite_usuarios Int      @default(5)
+  usuarios_ativos Int      @default(0)
+  data_criacao    DateTime @default(now())
+
+  master          TB_USUARIO @relation("MasterOrganizacao", fields: [id_master], references: [id_usuario])
+  usuarios        TB_USUARIO[] @relation("UsuariosOrganizacao")
+  convites        TB_CONVITE[]
+
+  @@map("tb_organizacao")
+}
+
+model TB_USUARIO {
+  id_usuario      String   @id @default(uuid())
+  nome            String
+  email           String   @unique
+  senha           String
+  foto_url        String?
+  tipo            TipoUsuario @default(master)
+  expo_push_token String?
+  id_organizacao  String?
+
+  trial_ativo             Boolean   @default(true)
+  trial_expira_em         DateTime?
+  plano_tipo              TipoPlano @default(trial)
+  plano_expira_em         DateTime?
+  periodo_contratacao     PeriodoContratacao?
+  data_renovacao          DateTime?
+  valor_pago              Decimal?  @db.Decimal(10, 2)
+
+  armazenamento_usado_mb      Int     @default(0)
+  armazenamento_limite_mb     Int     @default(5120)
+  armazenamento_extra_mb      Int     @default(0)
+  notificacao_80_enviada      Boolean @default(false)
+  notificacao_95_enviada      Boolean @default(false)
+
+  codigo_indicacao                String?  @unique
+  indicado_por                    String?
+  desconto_indicacao_percentual   Int      @default(0)
+  total_indicacoes_validas        Int      @default(0)
+
+  google_calendar_token           String?  @db.Text
+  google_calendar_refresh         String?  @db.Text
+  google_calendar_token_expiry    DateTime?
+  google_calendar_connected       Boolean  @default(false)
+
+  zoom_access_token    String?  @db.Text
+  zoom_refresh_token   String?  @db.Text
+  zoom_token_expiry    DateTime?
+  zoom_user_id         String?
+  zoom_connected       Boolean  @default(false)
+
+  anonimizado                 Boolean   @default(false)
+  data_anonimizacao           DateTime?
+  email_verificado            Boolean   @default(false)
+  token_verificacao_email     String?   @unique
+  data_verificacao_email      DateTime?
+
+  administradora_id String?
+
+  created_at         DateTime @default(now())
+  data_cadastro      DateTime @default(now())
+  dt_ultimo_acesso   DateTime @default(now())
+
+  organizacao_master          TB_ORGANIZACAO? @relation("MasterOrganizacao")
+  organizacao                 TB_ORGANIZACAO? @relation("UsuariosOrganizacao", fields: [id_organizacao], references: [id_organizacao])
+  
+  convites_enviados           TB_CONVITE[] @relation("ConvitesMaster")
+  convite_recebido            TB_CONVITE? @relation("ConviteUsuarioCriado")
+  
+  reunioes_criadas            TB_REUNIAO[]
+  participacoes_reuniao       TB_PARTICIPANTE_REUNIAO[]
+  pautas_criadas              TB_PAUTA[]
+  comentarios                 TB_COMENTARIO[]
+  pendencias_responsavel      TB_PENDENCIA[]
+  
+  assembleias_criadas         TB_ASSEMBLEIA_AVULSA[]
+  pacotes_assembleia          TB_PACOTE_ASSEMBLEIA[]
+  
+  agendamentos_externos       TB_AGENDAMENTO_EXTERNO[]
+  reunioes_zoom               TB_ZOOM_REUNIAO[]
+  compras_armazenamento       TB_COMPRA_ARMAZENAMENTO[]
+  
+  consentimentos              TB_CONSENTIMENTO[]
+  logs_acesso                 TB_LOG_ACESSO_LGPD[]
+  indicacoes_feitas           TB_INDICACAO[] @relation("IndicadorIndicacoes")
+  indicacao_recebida          TB_INDICACAO? @relation("IndicadoIndicacao")
+  
+  administradora              TB_ADMINISTRADORA? @relation(fields: [administradora_id], references: [id])
+  indicador                   TB_USUARIO? @relation("IndicadorUsuario", fields: [indicado_por], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
+  indicados                   TB_USUARIO[] @relation("IndicadorUsuario")
+
+  @@map("tb_usuario")
+}
+
+model TB_CONVITE {
+  id_convite          String   @id @default(uuid())
+  email_convidado     String
+  id_master           String
+  id_organizacao      String
+  token_ativacao      String   @unique
+  data_convite        DateTime @default(now())
+  data_expiracao      DateTime
+  status              StatusConvite @default(pendente)
+  id_usuario_criado   String?  @unique
+
+  master              TB_USUARIO @relation("ConvitesMaster", fields: [id_master], references: [id_usuario])
+  organizacao         TB_ORGANIZACAO @relation(fields: [id_organizacao], references: [id_organizacao])
+  usuario_criado      TB_USUARIO? @relation("ConviteUsuarioCriado", fields: [id_usuario_criado], references: [id_usuario])
+
+  @@unique([id_organizacao, email_convidado])
+  @@map("tb_convite")
+}
+
+// ==========================================
+// MÓDULO 2: REUNIÕES E PAUTAS (5 tabelas)
+// ==========================================
+
+model TB_REUNIAO {
+  id_reuniao          String   @id @default(uuid())
+  nome                String
+  descricao           String?  @db.Text
+  data_criacao        DateTime @default(now())
+  criador_id          String
+  data_hora_inicio    DateTime?
+  data_hora_fim       DateTime?
+  
+  recorrencia         TipoRecorrencia @default(nenhuma)
+  recorrencia_pai_id  String?
+  recorrencia_fim     DateTime?
+  
+  google_event_id     String?
+  zoom_meeting_id     String?
+  zoom_join_url       String?
+  zoom_start_url      String?
+
+  criador             TB_USUARIO @relation(fields: [criador_id], references: [id_usuario])
+  participantes       TB_PARTICIPANTE_REUNIAO[]
+  pautas              TB_PAUTA[]
+  recorrencia_pai     TB_REUNIAO? @relation("RecorrenciaReuniao", fields: [recorrencia_pai_id], references: [id_reuniao], onDelete: NoAction, onUpdate: NoAction)
+  recorrencias_filhas TB_REUNIAO[] @relation("RecorrenciaReuniao")
+
+  @@map("tb_reuniao")
+}
+
+model TB_PARTICIPANTE_REUNIAO {
+  id          String @id @default(uuid())
+  id_reuniao  String
+  id_usuario  String
+
+  reuniao     TB_REUNIAO @relation(fields: [id_reuniao], references: [id_reuniao], onDelete: Cascade)
+  usuario     TB_USUARIO @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@unique([id_reuniao, id_usuario])
+  @@map("tb_participante_reuniao")
+}
+
+model TB_PAUTA {
+  id_pauta        String   @id @default(uuid())
+  id_reuniao      String
+  data_registro   DateTime @default(now())
+  titulo          String   @db.VarChar(100)
+  conteudo        String   @db.Text
+  anexos          String[]
+  autor_nome      String
+  autor_id        String
+
+  reuniao         TB_REUNIAO @relation(fields: [id_reuniao], references: [id_reuniao], onDelete: Cascade)
+  autor           TB_USUARIO @relation(fields: [autor_id], references: [id_usuario])
+  comentarios     TB_COMENTARIO[]
+  pendencias      TB_PENDENCIA[]
+
+  @@map("tb_pauta")
+}
+
+model TB_COMENTARIO {
+  id_comentario   String   @id @default(uuid())
+  id_pauta        String
+  autor_id        String
+  conteudo        String   @db.VarChar(200)
+  data            DateTime @default(now())
+
+  pauta           TB_PAUTA @relation(fields: [id_pauta], references: [id_pauta], onDelete: Cascade)
+  autor           TB_USUARIO @relation(fields: [autor_id], references: [id_usuario])
+
+  @@map("tb_comentario")
+}
+
+model TB_PENDENCIA {
+  id_pendencia        String   @id @default(uuid())
+  id_pauta            String
+  titulo              String
+  responsavel_id      String
+  prazo               DateTime
+  status              StatusPendencia @default(pendente)
+  created_at          DateTime @default(now())
+  
+  recorrencia         TipoRecorrencia @default(nenhuma)
+  recorrencia_pai_id  String?
+  recorrencia_fim     DateTime?
+  
+  google_event_id     String?
+
+  pauta               TB_PAUTA @relation(fields: [id_pauta], references: [id_pauta], onDelete: Cascade)
+  responsavel         TB_USUARIO @relation(fields: [responsavel_id], references: [id_usuario])
+  recorrencia_pai     TB_PENDENCIA? @relation("RecorrenciaPendencia", fields: [recorrencia_pai_id], references: [id_pendencia], onDelete: NoAction, onUpdate: NoAction)
+  recorrencias_filhas TB_PENDENCIA[] @relation("RecorrenciaPendencia")
+
+  @@map("tb_pendencia")
+}
+
+// ==========================================
+// MÓDULO 3: ASSEMBLEIAS AVULSAS (7 tabelas)
+// ==========================================
+
+model TB_ASSEMBLEIA_AVULSA {
+  id                  String   @id @default(uuid())
+  nome_organizacao    String
+  email_contato       String
+  data_assembleia     DateTime
+  num_participantes   Int      @default(0)
+  max_participantes   Int      @default(30)
+  valor_pago          Decimal  @db.Decimal(10, 2)
+  status              StatusAssembleia @default(ativa)
+  data_criacao        DateTime @default(now())
+  data_expiracao      DateTime
+  
+  pauta_assembleia    String?  @db.Text
+  ata_assembleia      String?  @db.Text
+  
+  pagamento_id        String?
+  pagamento_status    String?
+  
+  criador_id          String
+  pacote_id           String?
+  
+  zoom_meeting_id     String?
+  zoom_join_url       String?
+
+  criador             TB_USUARIO @relation(fields: [criador_id], references: [id_usuario])
+  pacote              TB_PACOTE_ASSEMBLEIA? @relation(fields: [pacote_id], references: [id])
+  participantes       TB_PARTICIPANTE_ASSEMBLEIA[]
+  pautas              TB_PAUTA_ASSEMBLEIA[]
+  votacoes            TB_VOTACAO_ASSEMBLEIA[]
+
+  @@map("tb_assembleia_avulsa")
+}
+
+model TB_PACOTE_ASSEMBLEIA {
+  id                      String   @id @default(uuid())
+  usuario_id              String
+  tipo_pacote             String
+  valor_pago              Decimal  @db.Decimal(10, 2)
+  assembleias_total       Int
+  assembleias_usadas      Int      @default(0)
+  assembleias_restantes   Int
+  data_compra             DateTime @default(now())
+  data_expiracao          DateTime
+  ativo                   Boolean  @default(true)
+  
+  pagamento_id            String?
+  pagamento_status        String?
+
+  usuario                 TB_USUARIO @relation(fields: [usuario_id], references: [id_usuario])
+  assembleias             TB_ASSEMBLEIA_AVULSA[]
+
+  @@map("tb_pacote_assembleia")
+}
+
+model TB_PARTICIPANTE_ASSEMBLEIA {
+  id              String   @id @default(uuid())
+  assembleia_id   String
+  nome            String
+  email           String
+  presente        Boolean  @default(false)
+  created_at      DateTime @default(now())
+
+  assembleia      TB_ASSEMBLEIA_AVULSA @relation(fields: [assembleia_id], references: [id], onDelete: Cascade)
+  votos           TB_VOTO_ASSEMBLEIA[]
+
+  @@unique([assembleia_id, email])
+  @@map("tb_participante_assembleia")
+}
+
+model TB_PAUTA_ASSEMBLEIA {
+  id              String   @id @default(uuid())
+  assembleia_id   String
+  titulo          String
+  descricao       String   @db.Text
+  ordem           Int
+  created_at      DateTime @default(now())
+
+  assembleia      TB_ASSEMBLEIA_AVULSA @relation(fields: [assembleia_id], references: [id], onDelete: Cascade)
+  comentarios     TB_COMENTARIO_ASSEMBLEIA[]
+
+  @@map("tb_pauta_assembleia")
+}
+
+model TB_COMENTARIO_ASSEMBLEIA {
+  id          String   @id @default(uuid())
+  pauta_id    String
+  autor_nome  String
+  conteudo    String   @db.Text
+  data        DateTime @default(now())
+
+  pauta       TB_PAUTA_ASSEMBLEIA @relation(fields: [pauta_id], references: [id], onDelete: Cascade)
+
+  @@map("tb_comentario_assembleia")
+}
+
+model TB_VOTACAO_ASSEMBLEIA {
+  id              String   @id @default(uuid())
+  assembleia_id   String
+  titulo          String
+  descricao       String?  @db.Text
+  opcoes          String[]
+  ativa           Boolean  @default(true)
+  created_at      DateTime @default(now())
+  encerrada_em    DateTime?
+
+  assembleia      TB_ASSEMBLEIA_AVULSA @relation(fields: [assembleia_id], references: [id], onDelete: Cascade)
+  votos           TB_VOTO_ASSEMBLEIA[]
+
+  @@map("tb_votacao_assembleia")
+}
+
+model TB_VOTO_ASSEMBLEIA {
+  id                String   @id @default(uuid())
+  votacao_id        String
+  participante_id   String
+  opcao_escolhida   String
+  data_voto         DateTime @default(now())
+
+  votacao           TB_VOTACAO_ASSEMBLEIA @relation(fields: [votacao_id], references: [id], onDelete: Cascade)
+  participante      TB_PARTICIPANTE_ASSEMBLEIA @relation(fields: [participante_id], references: [id], onDelete: Cascade)
+
+  @@unique([votacao_id, participante_id])
+  @@map("tb_voto_assembleia")
+}
+
+// ==========================================
+// MÓDULO 4: ADMINISTRADORAS (2 tabelas)
+// ==========================================
+
+model TB_ADMINISTRADORA {
+  id                      String   @id @default(uuid())
+  nome                    String
+  cnpj                    String   @unique
+  email_contato           String
+  telefone                String?
+  plano                   PlanoAdministradora
+  max_condominios         Int
+  valor_mensal            Decimal  @db.Decimal(10, 2)
+  assembleias_incluidas   Int
+  assembleias_usadas      Int      @default(0)
+  data_contratacao        DateTime @default(now())
+  data_renovacao          DateTime?
+  ativo                   Boolean  @default(true)
+  
+  pagamento_id            String?
+  pagamento_status        String?
+
+  condominios             TB_CONDOMINIO_ADMINISTRADORA[]
+  funcionarios            TB_USUARIO[]
+
+  @@map("tb_administradora")
+}
+
+model TB_CONDOMINIO_ADMINISTRADORA {
+  id                  String   @id @default(uuid())
+  administradora_id   String
+  nome                String
+  endereco            String?
+  num_unidades        Int?
+  email_sindico       String?
+  telefone_sindico    String?
+  data_cadastro       DateTime @default(now())
+  ativo               Boolean  @default(true)
+
+  administradora      TB_ADMINISTRADORA @relation(fields: [administradora_id], references: [id])
+
+  @@map("tb_condominio_administradora")
+}
+
+// ==========================================
+// MÓDULO 5: INTEGRAÇÕES (3 tabelas)
+// ==========================================
+
+model TB_AGENDAMENTO_EXTERNO {
+  id_agendamento      String   @id @default(uuid())
+  usuario_id          String
+  nome_solicitante    String
+  email_solicitante   String
+  data_hora_desejada  DateTime
+  motivo              String   @db.Text
+  status              StatusAgendamento @default(pendente)
+  link_unico          String   @unique
+  created_at          DateTime @default(now())
+  
+  recorrencia         TipoRecorrencia @default(nenhuma)
+  recorrencia_pai_id  String?
+  recorrencia_fim     DateTime?
+  
+  google_event_id     String?
+
+  usuario             TB_USUARIO @relation(fields: [usuario_id], references: [id_usuario])
+  recorrencia_pai     TB_AGENDAMENTO_EXTERNO? @relation("RecorrenciaAgendamento", fields: [recorrencia_pai_id], references: [id_agendamento], onDelete: NoAction, onUpdate: NoAction)
+  recorrencias_filhas TB_AGENDAMENTO_EXTERNO[] @relation("RecorrenciaAgendamento")
+
+  @@map("tb_agendamento_externo")
+}
+
+model TB_ZOOM_REUNIAO {
+  id                  String   @id @default(uuid())
+  usuario_id          String
+  meeting_id          String   @unique
+  topic               String
+  start_time          DateTime?
+  duration            Int?
+  join_url            String
+  start_url           String?
+  password            String?
+  status              String
+  created_at          DateTime @default(now())
+  
+  reuniao_planex_id   String?
+  assembleia_id       String?
+
+  usuario             TB_USUARIO @relation(fields: [usuario_id], references: [id_usuario])
+
+  @@map("tb_zoom_reuniao")
+}
+
+model TB_COMPRA_ARMAZENAMENTO {
+  id                  String   @id @default(uuid())
+  usuario_id          String
+  quantidade_mb       Int
+  valor_pago          Decimal  @db.Decimal(10, 2)
+  data_compra         DateTime @default(now())
+  
+  pagamento_id        String?
+  pagamento_status    String?
+
+  usuario             TB_USUARIO @relation(fields: [usuario_id], references: [id_usuario])
+
+  @@map("tb_compra_armazenamento")
+}
+
+// ==========================================
+// MÓDULO 6: LGPD E INDICAÇÕES (4 tabelas)
+// ==========================================
+
+model TB_CONSENTIMENTO {
+  id                  String   @id @default(uuid())
+  usuario_id          String
+  tipo_consentimento  TipoConsentimento
+  aceito              Boolean
+  data_aceite         DateTime @default(now())
+  ip_aceite           String?
+  versao_documento    String?
+
+  usuario             TB_USUARIO @relation(fields: [usuario_id], references: [id_usuario])
+
+  @@unique([usuario_id, tipo_consentimento])
+  @@map("tb_consentimento")
+}
+
+model TB_LOG_ACESSO_LGPD {
+  id                  String   @id @default(uuid())
+  usuario_id          String
+  acao                String
+  dados_acessados     String   @db.Text
+  ip_origem           String?
+  user_agent          String?
+  data_acesso         DateTime @default(now())
+
+  usuario             TB_USUARIO @relation(fields: [usuario_id], references: [id_usuario])
+
+  @@map("tb_log_acesso_lgpd")
+}
+
+model TB_INDICACAO {
+  id                      String   @id @default(uuid())
+  indicador_id            String
+  indicado_id             String   @unique
+  data_indicacao          DateTime @default(now())
+  status                  StatusIndicacao @default(pendente)
+  recompensa_tipo         TipoRecompensa?
+  recompensa_valor        Decimal? @db.Decimal(10, 2)
+  data_conversao          DateTime?
+  data_recompensa         DateTime?
+  desconto_percentual     Int      @default(20)
+  aplicado_ao_pagamento   Boolean  @default(false)
+
+  indicador               TB_USUARIO @relation("IndicadorIndicacoes", fields: [indicador_id], references: [id_usuario])
+  indicado                TB_USUARIO @relation("IndicadoIndicacao", fields: [indicado_id], references: [id_usuario])
+
+  @@unique([indicador_id, indicado_id])
+  @@map("tb_indicacao")
+}
+
+model TB_CONFIG_PLANOS {
+  id                  String   @id @default(uuid())
+  nome_plano          String   @unique
+  tipo_plano          TipoPlano
+  max_usuarios        Int
+  armazenamento_mb    Int
+  valor_trimestral    Decimal  @db.Decimal(10, 2)
+  valor_semestral     Decimal  @db.Decimal(10, 2)
+  valor_anual         Decimal  @db.Decimal(10, 2)
+  ativo               Boolean  @default(true)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  @@map("tb_config_planos")
+}
