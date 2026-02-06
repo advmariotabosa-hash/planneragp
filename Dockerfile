@@ -8,11 +8,14 @@ RUN npm install -g @nestjs/cli
 # Copy package files first
 COPY package*.json ./
 
-# Install project dependencies
-RUN npm install
+# Install project dependencies WITH legacy-peer-deps flag
+RUN npm install --legacy-peer-deps
 
 # Copy entire project
 COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 # Build the project
 RUN npm run build
