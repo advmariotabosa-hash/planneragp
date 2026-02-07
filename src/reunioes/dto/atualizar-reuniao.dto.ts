@@ -1,13 +1,13 @@
 import { IsString, IsOptional, IsDateString, IsEnum } from 'class-validator';
 
-enum TipoReuniao {
+export enum TipoReuniao {
   ORDINARIA = 'ORDINARIA',
   EXTRAORDINARIA = 'EXTRAORDINARIA',
   INAUGURAL = 'INAUGURAL',
   OUTRO = 'OUTRO'
 }
 
-enum StatusReuniao {
+export enum StatusReuniao {
   AGENDADA = 'AGENDADA',
   EM_ANDAMENTO = 'EM_ANDAMENTO',
   CONCLUIDA = 'CONCLUIDA',
@@ -17,7 +17,7 @@ enum StatusReuniao {
 export class AtualizarReuniaoDto {
   @IsString()
   @IsOptional()
-  titulo?: string;
+  nome?: string;
 
   @IsString()
   @IsOptional()
@@ -29,19 +29,19 @@ export class AtualizarReuniaoDto {
 
   @IsDateString()
   @IsOptional()
-  dt_inicio?: string;
+  data_hora_inicio?: string;
 
   @IsDateString()
   @IsOptional()
-  dt_fim?: string;
+  data_hora_fim?: string;
 
   @IsString()
   @IsOptional()
-  localizacao?: string;
+  local?: string;
 
   @IsString()
   @IsOptional()
-  link_videochamada?: string;
+  link_reuniao?: string;
 
   @IsEnum(StatusReuniao)
   @IsOptional()
