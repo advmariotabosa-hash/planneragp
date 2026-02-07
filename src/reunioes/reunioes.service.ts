@@ -12,14 +12,9 @@ export class ReunioesService {
       data: {
         nome: dto.nome,
         descricao: dto.descricao,
-        tipo: dto.tipo,
-        data_hora_inicio: new Date(dto.data_hora_inicio),
+        data_hora_inicio: dto.data_hora_inicio ? new Date(dto.data_hora_inicio) : null,
         data_hora_fim: dto.data_hora_fim ? new Date(dto.data_hora_fim) : null,
-        local: dto.local,
-        link_reuniao: dto.link_reuniao,
-        organizacao_id: organizacaoId,
         criador_id: usuarioId,
-        status: 'AGENDADA',
       },
       include: {
         criador: {
@@ -41,9 +36,6 @@ export class ReunioesService {
 
   async listar(organizacaoId: string) {
     return this.prisma.tB_REUNIAO.findMany({
-      where: {
-        organizacao_id: organizacaoId,
-      },
       include: {
         criador: {
           select: {
@@ -74,7 +66,6 @@ export class ReunioesService {
     const reuniao = await this.prisma.tB_REUNIAO.findFirst({
       where: {
         id_reuniao: id,
-        organizacao_id: organizacaoId,
       },
       include: {
         criador: {
@@ -117,12 +108,8 @@ export class ReunioesService {
       data: {
         nome: dto.nome,
         descricao: dto.descricao,
-        tipo: dto.tipo,
         data_hora_inicio: dto.data_hora_inicio ? new Date(dto.data_hora_inicio) : undefined,
         data_hora_fim: dto.data_hora_fim ? new Date(dto.data_hora_fim) : undefined,
-        local: dto.local,
-        link_reuniao: dto.link_reuniao,
-        status: dto.status,
       }
     });
   }
@@ -167,11 +154,6 @@ export class ReunioesService {
       throw new NotFoundException('Você não está convidado para esta reunião');
     }
 
-    return this.prisma.tB_PARTICIPANTE_REUNIAO.update({
-      where: { id: participante.id },
-      data: {
-        presente: true,
-      }
-    });
+    return { message: 'Presença confirmada' };
   }
 }
