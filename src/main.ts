@@ -5,7 +5,6 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Configuração CORS completa
   app.enableCors({
     origin: true,
     credentials: true,
@@ -16,7 +15,6 @@ async function bootstrap() {
     optionsSuccessStatus: 204
   });
 
-  // Validação global
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -34,18 +32,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-```
-
----
-
-## 📍 AGORA:
-
-### **1. No GitHub, edite o arquivo `main.ts`**
-
-### **2. APAGUE TODO o conteúdo atual**
-
-### **3. COLE este código completo**
-
-### **4. Commit com mensagem:**
-```
-fix: corrige CORS completamente
