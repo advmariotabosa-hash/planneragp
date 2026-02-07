@@ -157,5 +157,3 @@ export class ReunioesService {
     return { message: 'Presença confirmada' };
   }
 }
-
-Faça isso e me avise quando salvar! 😊🚀
