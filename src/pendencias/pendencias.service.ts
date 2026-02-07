@@ -149,4 +149,3 @@ export class PendenciasService {
     });
   }
 }
-eat: adiciona service de pendências
