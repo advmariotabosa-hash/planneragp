@@ -10,15 +10,15 @@ export class ReunioesService {
   async criar(usuarioId: string, organizacaoId: string, dto: CriarReuniaoDto) {
     const reuniao = await this.prisma.tB_REUNIAO.create({
       data: {
-        titulo: dto.titulo,
+        nome: dto.nome,
         descricao: dto.descricao,
         tipo: dto.tipo,
-        dt_inicio: new Date(dto.dt_inicio),
-        dt_fim: dto.dt_fim ? new Date(dto.dt_fim) : null,
-        localizacao: dto.localizacao,
-        link_videochamada: dto.link_videochamada,
-        id_organizacao: organizacaoId,
-        id_criador: usuarioId,
+        data_hora_inicio: new Date(dto.data_hora_inicio),
+        data_hora_fim: dto.data_hora_fim ? new Date(dto.data_hora_fim) : null,
+        local: dto.local,
+        link_reuniao: dto.link_reuniao,
+        organizacao_id: organizacaoId,
+        criador_id: usuarioId,
         status: 'AGENDADA',
       },
       include: {
@@ -42,7 +42,7 @@ export class ReunioesService {
   async listar(organizacaoId: string) {
     return this.prisma.tB_REUNIAO.findMany({
       where: {
-        id_organizacao: organizacaoId,
+        organizacao_id: organizacaoId,
       },
       include: {
         criador: {
@@ -62,21 +62,10 @@ export class ReunioesService {
               }
             }
           }
-        },
-        pautas: {
-          select: {
-            id_pauta: true,
-            titulo: true,
-            numero_ordem: true,
-            concluida: true,
-          },
-          orderBy: {
-            numero_ordem: 'asc'
-          }
         }
       },
       orderBy: {
-        dt_inicio: 'desc'
+        data_hora_inicio: 'desc'
       }
     });
   }
@@ -85,7 +74,7 @@ export class ReunioesService {
     const reuniao = await this.prisma.tB_REUNIAO.findFirst({
       where: {
         id_reuniao: id,
-        id_organizacao: organizacaoId,
+        organizacao_id: organizacaoId,
       },
       include: {
         criador: {
@@ -104,19 +93,6 @@ export class ReunioesService {
                 email: true,
               }
             }
-          }
-        },
-        pautas: {
-          include: {
-            criador: {
-              select: {
-                id_usuario: true,
-                nome: true,
-              }
-            }
-          },
-          orderBy: {
-            numero_ordem: 'asc'
           }
         }
       }
@@ -132,20 +108,20 @@ export class ReunioesService {
   async atualizar(id: string, organizacaoId: string, usuarioId: string, dto: AtualizarReuniaoDto) {
     const reuniao = await this.buscarPorId(id, organizacaoId);
 
-    if (reuniao.id_criador !== usuarioId) {
+    if (reuniao.criador_id !== usuarioId) {
       throw new ForbiddenException('Apenas o criador pode atualizar a reunião');
     }
 
     return this.prisma.tB_REUNIAO.update({
       where: { id_reuniao: id },
       data: {
-        titulo: dto.titulo,
+        nome: dto.nome,
         descricao: dto.descricao,
         tipo: dto.tipo,
-        dt_inicio: dto.dt_inicio ? new Date(dto.dt_inicio) : undefined,
-        dt_fim: dto.dt_fim ? new Date(dto.dt_fim) : undefined,
-        localizacao: dto.localizacao,
-        link_videochamada: dto.link_videochamada,
+        data_hora_inicio: dto.data_hora_inicio ? new Date(dto.data_hora_inicio) : undefined,
+        data_hora_fim: dto.data_hora_fim ? new Date(dto.data_hora_fim) : undefined,
+        local: dto.local,
+        link_reuniao: dto.link_reuniao,
         status: dto.status,
       }
     });
@@ -154,7 +130,7 @@ export class ReunioesService {
   async deletar(id: string, organizacaoId: string, usuarioId: string) {
     const reuniao = await this.buscarPorId(id, organizacaoId);
 
-    if (reuniao.id_criador !== usuarioId) {
+    if (reuniao.criador_id !== usuarioId) {
       throw new ForbiddenException('Apenas o criador pode deletar a reunião');
     }
 
@@ -169,7 +145,6 @@ export class ReunioesService {
     const participantes = usuariosIds.map(usuarioId => ({
       id_reuniao: reuniaoId,
       id_usuario: usuarioId,
-      confirmado: false,
     }));
 
     await this.prisma.tB_PARTICIPANTE_REUNIAO.createMany({
@@ -193,10 +168,9 @@ export class ReunioesService {
     }
 
     return this.prisma.tB_PARTICIPANTE_REUNIAO.update({
-      where: { id_participante: participante.id_participante },
+      where: { id: participante.id },
       data: {
-        confirmado: true,
-        dt_confirmacao: new Date(),
+        presente: true,
       }
     });
   }
