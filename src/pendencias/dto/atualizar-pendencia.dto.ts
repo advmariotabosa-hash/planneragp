@@ -26,8 +26,3 @@ export class AtualizarPendenciaDto {
   @IsOptional()
   descricao?: string;
 }
-```
-
-### **4. Commit:**
-```
-feat: adiciona DTO para atualizar pendência
