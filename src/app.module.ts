@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ReunioesModule } from './reunioes/reunioes.module';
 import { PendenciasModule } from './pendencias/pendencias.module';
+import { PautasModule } from './pautas/pautas.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PendenciasModule } from './pendencias/pendencias.module';
     AuthModule,
     ReunioesModule,
     PendenciasModule,
+    PautasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
