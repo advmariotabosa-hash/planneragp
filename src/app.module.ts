@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { ReunioesModule } from './reunioes/reunioes.module';
 import { PendenciasModule } from './pendencias/pendencias.module';
 import { PautasModule } from './pautas/pautas.module';
+import { AssembleiasModule } from './assembleias/assembleias.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PautasModule } from './pautas/pautas.module';
     ReunioesModule,
     PendenciasModule,
     PautasModule,
+    AssembleiasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
